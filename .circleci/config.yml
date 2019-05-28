@@ -1,0 +1,74 @@
+references:
+  commands:
+    sam_deploy: &sam_deploy
+      name: AWS SAM DEPLOY
+      command: |
+        sam build --use-container
+        sam package --template-file .aws-sam/build/template.yaml --output-template-file packaged.yml --s3-bucket sam-serverless-apps
+        sam deploy --template-file packaged.yml --stack-name sam-slack-slash-command --capabilities CAPABILITY_IAM
+version: 2
+jobs:
+  build-front:
+    docker:
+      - image: circleci/node:10.0
+    working_directory: ~/workspace
+
+    steps:
+      - checkout
+      - restore_cache:
+          key: yarn-{{ .Branch }}-{{ checksum "~/workspace/front/yarn.lock" }}
+
+      - run: cd front && yarn install
+
+      - save_cache:
+          key: yarn-{{ .Branch }}-{{ checksum "~/workspace/front/yarn.lock" }}
+          paths:
+            - ~/workspace/front/node_modules
+
+      - run: cd front && yarn eslint
+      - run: cd front && yarn test
+  build-back:
+    docker:
+      - image: circleci/node:10.0
+    working_directory: ~/workspace
+
+    steps:
+      - checkout
+      - restore_cache:
+          key: yarn-{{ .Branch }}-{{ checksum "~/workspace/back/yarn.lock" }}
+
+      - run: cd back && yarn install
+
+      - save_cache:
+          key: yarn-{{ .Branch }}-{{ checksum "~/workspace/back/yarn.lock" }}
+          paths:
+            - ~/workspace/back/node_modules
+
+      - run: cd back && yarn eslint
+      - run: cd back && yarn test
+  deploy:
+    machine: true
+    steps:
+      - checkout
+      - run:
+          name: Install aws-cli
+          command: |
+            pip install --upgrade pip
+            pip install awscli aws-sam-cli
+      - run: sam --version
+      - run: *sam_deploy
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build-front
+      - build-back
+      - deploy:
+          requires:
+            - build-front
+            - build-back
+          filters:
+            branches:
+              only:
+                - master
