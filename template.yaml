@@ -49,4 +49,4 @@ Outputs:
     Value: !GetAtt BackFunction.Arn
   BackFunctionIamRole:
     Description: "Implicit IAM Role created for BackFunction"
-    Value: !GetAtt BackFunctionRole.Ar
+    Value: !GetAtt BackFunctionRole.Arn
