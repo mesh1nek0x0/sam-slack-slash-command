@@ -5,7 +5,7 @@ references:
       command: |
         sam build --use-container
         sam package --template-file .aws-sam/build/template.yaml --output-template-file packaged.yml --s3-bucket sam-serverless-apps
-        sam deploy --template-file packaged.yml --stack-name sam-slack-slash-command --capabilities CAPABILITY_IAM
+        sam deploy --template-file packaged.yml --stack-name sam-slack-slash-command --capabilities CAPABILITY_IAM --region ap-northeast-1
 version: 2
 jobs:
   build-front:
